@@ -1,0 +1,34 @@
+{
+  "name": "snkrs_bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./www",
+    "develop": "nodemon --inspect --exec babel-node src/www",
+    "build": "babel src --out-dir server",
+    "debug": "nodemon --inspect server/www"
+  },
+  "author": "Wang Stonna",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "cookie-parser": "^1.4.4",
+    "express": "^4.17.1",
+    "morgan": "^1.9.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/node": "^7.5.5",
+    "@babel/plugin-proposal-export-default-from": "^7.5.2",
+    "@babel/polyfill": "^7.4.4",
+    "@babel/preset-env": "^7.5.5",
+    "@babel/preset-react": "^7.0.0",
+    "babel-eslint": "^10.0.2",
+    "babel-loader": "^8.0.6",
+    "babel-preset-env": "^1.7.0",
+    "css-loader": "^3.1.0"
+  }
+}
