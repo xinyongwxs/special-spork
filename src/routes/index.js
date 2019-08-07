@@ -1,5 +1,6 @@
 import express from 'express';
-import { snkrLogin } from './apis/builder';
+import { snkrLogin, ipParser } from './apis/builder';
+import { checkIsCompanyIp } from './dao/ipBlacklist';
 const router = express.Router();
 
 /* GET home page. */
@@ -16,6 +17,18 @@ router.post('/user/add', (req, res) => {
       grantType: "password"
     }).then((result) => res.send(result.data))
     .catch(error => res.send(error.response && error.response.status || 500, error.response && error.response.data || error.response.message));
+});
+
+router.post('/ip/parser', (req, res) => {
+  ipParser(req.body.ip)
+  .then(result => res.send(result.data))
+  .catch(error => res.send(error.response && error.response.status || 500, error.response && error.response.data || error.response.message));
+});
+
+router.get('/ip/blackone', (req, res) => {
+  checkIsCompanyIp(req.query.ip)
+  .then(result => res.send(result[0]))
+  .catch(error => res.send(500, error));
 });
 
 export default router;

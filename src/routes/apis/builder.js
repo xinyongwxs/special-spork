@@ -23,3 +23,13 @@ export function snkrLogin(param) {
         }
     });
 };
+
+export function ipParser(ip) {
+    const apiUrl = "https://api.udger.com/v3/parse";
+    const apiParams = {
+        accesskey: "d9b537b72903e269a2ca7a6862e36969",
+        ua: "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/6.0)",
+        ip: ip
+    };
+    return axios.post(apiUrl, apiParams);
+};
