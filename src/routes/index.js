@@ -32,7 +32,8 @@ router.get('/ip/blackone', (req, res) => {
 });
 
 router.get('/test', (req, res) => {
-  res.send("request ip - " + req.ip);
+  const address = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  res.send("request ip - " + address);
 });
 
 export default router;

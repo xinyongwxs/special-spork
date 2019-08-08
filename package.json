@@ -5,12 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "sudo PORT=80 node server/www",
+    "start:remote": "sudo PORT=80 node server/www",
+    "start": "node server/www",
     "develop": "nodemon --inspect --exec babel-node src/www",
     "build": "rm -rf server && babel src --out-dir server",
     "debug": "nodemon --inspect server/www",
     "debug:pro": "npm run build && npm run debug",
-    "start:pro": "npm run build && npm run start"
+    "start:pro": "npm run build && npm run start:remote",
+    "start:local": "npm run build && npm run start"
   },
   "author": "Wang Stonna",
   "license": "ISC",
