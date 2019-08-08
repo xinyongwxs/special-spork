@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server/www",
+    "start": "sudo PORT=80 node server/www",
     "develop": "nodemon --inspect --exec babel-node src/www",
     "build": "rm -rf server && babel src --out-dir server",
     "debug": "nodemon --inspect server/www",
