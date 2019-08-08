@@ -33,7 +33,17 @@ router.get('/ip/blackone', (req, res) => {
 
 router.get('/test', (req, res) => {
   const address = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  res.send("request ip - " + address);
+  checkIsCompanyIp(address).then(result => {
+    res.send({
+      ...result[0],
+      remoteAddress: address
+    });
+  }).catch(result => {
+    res.send(500, {
+      remoteAddress: address,
+      error: error
+    });
+  });
 });
 
 export default router;
