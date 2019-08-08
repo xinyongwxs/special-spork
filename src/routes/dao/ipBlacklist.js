@@ -2,9 +2,9 @@ import mysql from 'mysql';
 
 const getConnection = () => {
     const connection = mysql.createConnection({
-        host: 'localhost',
-        user: 'stonna',
-        password: '@Initial1',
+        host: 'hostingip.cf7jrgbje83w.ap-southeast-1.rds.amazonaws.com',
+        user: 'admin',
+        password: 'Initial1',
         port: '3306',
         database: 'hosting_ip'
     });
@@ -24,9 +24,4 @@ export function checkIsCompanyIp(ip) {
         });
     });
     return queryPromise;
-};
-
-export function checkIsCompanyIpList(ipList) {
-    const connection = getConnection();
-
 };

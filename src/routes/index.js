@@ -32,7 +32,7 @@ router.get('/ip/blackone', (req, res) => {
 });
 
 router.get('/test', (req, res) => {
-  res.send("hello world!");
+  res.send("request ip - " + req.ip);
 });
 
 export default router;
