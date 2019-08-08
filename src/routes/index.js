@@ -31,4 +31,8 @@ router.get('/ip/blackone', (req, res) => {
   .catch(error => res.send(500, error));
 });
 
+router.get('/test', (req, res) => {
+  res.send("hello world!");
+});
+
 export default router;
