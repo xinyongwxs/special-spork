@@ -2,11 +2,11 @@ import mysql from 'mysql';
 
 const getConnection = () => {
     const connection = mysql.createConnection({
-        host: 'hostingip.cf7jrgbje83w.ap-southeast-1.rds.amazonaws.com',
-        user: 'admin',
-        password: 'Initial1',
+        host: '18.139.136.18',
+        user: 'root',
+        password: 'nike1234',
         port: '3306',
-        database: 'hosting_ip'
+        database: 'cnds_bots_data'
     });
     return connection;
 };

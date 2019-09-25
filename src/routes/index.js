@@ -1,11 +1,20 @@
 import express from 'express';
-import { snkrLogin, ipParser } from './apis/builder';
+import { snkrLogin, ipParser, getJordanList } from './apis/builder';
 import { checkIsCompanyIp } from './dao/ipBlacklist';
 const router = express.Router();
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
   res.render('index', { title: 'Express' });
+});
+
+router.get('/jordan/list', (req, res) => {
+  getJordanList()
+  .then(result => {
+    const ress = result.data;
+    res.send(ress);
+  })
+  .catch(error => res.send(error.response && error.response.status || 500, error.response && error.response.data || error.response.message));
 });
 
 router.post('/user/add', (req, res) => {
