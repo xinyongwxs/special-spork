@@ -70,6 +70,20 @@ export const itemDetail = (itemName, itemCode) => {
     });
 };
 
+export const sendWechatMessage = msg => {
+    return axios.post("http://wxpusher.zjiecode.com/api/send/message", {
+        "appToken": "AT_z99lafAoTwrGCPHb9Z1x1raxhTzLv0Oz",
+        "content": msg,
+        "contentType": 1,//内容类型 1表示文字  2表示html 3表示markdown
+        "topicIds": [ //发送目标的topicId，是一个数组！！！
+            123
+        ],
+        "uids": [//发送目标的UID，是一个数组！！！
+            "UID_1RCym3XNLQTIkC3pcSTSPq4k8kNd"
+        ]
+    });
+};
+
 export function ipParser(ip) {
     const apiUrl = "https://api.udger.com/v3/parse";
     const apiParams = {

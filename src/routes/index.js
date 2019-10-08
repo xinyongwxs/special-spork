@@ -1,5 +1,5 @@
 import express from 'express';
-import { snkrLogin, ipParser, getJordanList, itemDetail } from './apis/builder';
+import { snkrLogin, ipParser, getJordanList, itemDetail, sendWechatMessage } from './apis/builder';
 import { checkIsCompanyIp } from './dao/ipBlacklist';
 import moment from 'moment';
 const router = express.Router();
@@ -21,21 +21,128 @@ router.get('/jordan/list', (req, res) => {
 
 const handleStatusResult = values => {
   let statusList = [];
-  statusList = values.map(val => {
-    let status = {};
+  let statusObjList = {};
+  values.forEach(val => {
     let ress = val.data.trim();
     let regx = /<script>window.INITIAL_REDUX_STATE={(.*?)<\/script>/g;
     let stateInfoStrArray = ress.match(regx);
     let stateInfo = JSON.parse(stateInfoStrArray[0].slice(35, -10));
     for (let code in stateInfo.Threads.products) {
+      let status = {};
       status['productName'] = stateInfo.Threads.products[code]['fullTitle'];
+      status['state'] = stateInfo.Threads.products[code]['state'];
+      status['status'] = stateInfo.Threads.products[code]['status'];
       status['styleColor'] = code;
-      status['availableSkus'] = stateInfo.Threads.products[code]['availableSkus'];
+      status['employeePrice'] = stateInfo.Threads.products[code]['employeePrice'];
+      status['currentPrice'] = stateInfo.Threads.products[code]['currentPrice'];
+      status['firstImageUrl'] = stateInfo.Threads.products[code]['firstImageUrl'];
+      status['availableSkus'] = stateInfo.Threads.products[code]['availableSkus'].map(sku => {
+        const foundSku = stateInfo.Threads.products[code]['skus'].find(sItem => sku.skuId === sItem.skuId);
+        return {
+          ...sku,
+          nikeSize: foundSku.nikeSize,
+          localizedSize: foundSku.localizedSize
+        };
+      });
+      statusObjList[code] = status;
     }
-    return status;
   });
+  for (let code in statusObjList) {
+    statusList.push(statusObjList[code]);
+  }
   return statusList;
 };
+
+const getJordanStatusList = (anchor, count) => {
+  return getJordanList(anchor, count).then(async result => {
+    let productList = result.data.data.products.objects || [];
+    let promiseList = [];
+    let productNameList = [];
+    productList.forEach(product => {
+      if (product.rollup.totalThreads === 1) {
+          productNameList.push({
+            productItemName: product.publishedContent.properties.seo.slug,
+            productItemCode: product.productInfo[0].merchProduct.styleColor
+          });
+      } else if (product.rollup.totalThreads > 1) {
+        let curThreads = product.rollup.threads;
+        curThreads.forEach(thread => {
+          productNameList.push({
+            productItemName: thread.publishedContent.properties.seo.slug,
+            productItemCode: thread.productInfo[0].merchProduct.styleColor
+          });
+        });
+      }
+    });
+
+    promiseList = productNameList.map(obj => itemDetail(obj.productItemName, obj.productItemCode));
+
+    let values = await Promise.all(promiseList);
+
+    const statusList = handleStatusResult(values);
+
+    return statusList;
+  });
+};
+
+const handleJordanList = (anchor, count, res) => {
+  getJordanList(anchor, count).then(result => {
+    let productList = result.data.data.products.objects || [];
+    let promiseList = [];
+    let productNameList = [];
+    productList.forEach(product => {
+      if (product.rollup.totalThreads === 1) {
+        productNameList.push({
+          productItemName: product.publishedContent.properties.seo.slug,
+          productItemCode: product.productInfo[0].merchProduct.styleColor
+        });
+      } else if (product.rollup.totalThreads > 1) {
+        let curThreads = product.rollup.threads;
+        curThreads.forEach(thread => {
+          productNameList.push({
+            productItemName: thread.publishedContent.properties.seo.slug,
+            productItemCode: thread.productInfo[0].merchProduct.styleColor
+          });
+        });
+      }
+    });
+
+    promiseList = productNameList.map(obj => itemDetail(obj.productItemName, obj.productItemCode));
+
+    Promise.all(promiseList).then(values => {
+      const statusList = handleStatusResult(values);
+      const contentList = statusList.map(itemContent => {
+        let skuInfo = itemContent.availableSkus.reduce((acc, cur) => acc += `${cur.localizedSize} `, "available size: ");
+        return `product name: ${itemContent.productName}\nstyle code: ${itemContent.styleColor}\ncurrent price: ${itemContent.currentPrice}\nemployee price: ${itemContent.employeePrice}\nproduct state: ${itemContent.state}\n${skuInfo}\n\n`;
+      });
+      const finalContent = contentList.reduce((acc, curr) => acc += curr, `anchor ${anchor}:\n`);
+      sendWechatMessage(finalContent).then(result => {
+        if (res)
+          res.send(result.data);
+        else
+          console.log(result.data);
+      }).catch(err => {
+        if (res)
+          res.send(err);
+        else
+          console.log(err);
+      });
+    }).catch(error => res.send(error.response));
+  });
+};
+
+let getJordanListInterval = setInterval(() => {
+  let anchor = 0;
+  let count = 30;
+  while (anchor < 100) {
+
+  }
+}, 3600000);
+
+router.post('/wechat/callback', (req, res) => {
+  const uidInfo = req.body;
+  res.send(uidInfo);
+});
 
 router.get('/item/detail', (req, res) => {
   let itemName = req.query.itemName || null;
@@ -52,20 +159,7 @@ router.get('/item/detail', (req, res) => {
 router.get('/jordan/products/status', (req, res) => {
   let anchor = req.query.anchor || null;
   let count = req.query.count || null;
-  getJordanList(anchor, count).then(result => {
-    let productList = result.data.data.products.objects || [];
-    let promiseList = [];
-    promiseList = productList.map(product => {
-      let productItemName = product.publishedContent.properties.seo.slug;
-      let productItemCode = product.productInfo[0].merchProduct.styleColor;
-      return itemDetail(productItemName, productItemCode);
-    });
-
-    Promise.all(promiseList).then(values => {
-      const statusList = handleStatusResult(values);
-      res.send(statusList);
-    }).catch(error => res.send(error.response));
-  });
+  handleJordanList(anchor, count, res);
 });
 
 router.post('/user/add', (req, res) => {
