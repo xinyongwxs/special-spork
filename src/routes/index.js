@@ -131,13 +131,31 @@ const handleJordanList = (anchor, count, res) => {
   });
 };
 
-let getJordanListInterval = setInterval(() => {
-  let anchor = 0;
-  let count = 30;
-  while (anchor < 100) {
+let latestStatusList = [];
 
-  }
-}, 3600000);
+let getJordanListInterval = null;
+
+
+
+router.get('/startInterval', (req, res) => {
+  getJordanListInterval = setInterval(async () => {
+    let anchor = 0;
+    let count = 30;
+    let result = [];
+    while (anchor < 100) {
+      let statusList = await getJordanStatusList(anchor, count);
+      result = result.concat(statusList);
+      anchor += 30;
+    }
+    latestStatusList = result;
+    sendWechatMessage(latestStatusList.length);
+  }, 10000);
+});
+
+
+router.get('/stopInterval', (req, res) => {
+  clearInterval(getJordanListInterval);
+});
 
 router.post('/wechat/callback', (req, res) => {
   const uidInfo = req.body;
