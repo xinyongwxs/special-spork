@@ -85,49 +85,28 @@ const getJordanStatusList = (anchor, count) => {
   });
 };
 
-const handleJordanList = (anchor, count, res) => {
-  getJordanList(anchor, count).then(result => {
-    let productList = result.data.data.products.objects || [];
-    let promiseList = [];
-    let productNameList = [];
-    productList.forEach(product => {
-      if (product.rollup.totalThreads === 1) {
-        productNameList.push({
-          productItemName: product.publishedContent.properties.seo.slug,
-          productItemCode: product.productInfo[0].merchProduct.styleColor
-        });
-      } else if (product.rollup.totalThreads > 1) {
-        let curThreads = product.rollup.threads;
-        curThreads.forEach(thread => {
-          productNameList.push({
-            productItemName: thread.publishedContent.properties.seo.slug,
-            productItemCode: thread.productInfo[0].merchProduct.styleColor
-          });
-        });
-      }
-    });
+const statusListFormat = (statusList, anchor) => {
+  const contentList = statusList.map(itemContent => {
+    let skuInfo = itemContent.availableSkus.reduce((acc, cur) => acc += `${cur.localizedSize} `, "available size: ");
+    return `product name: ${itemContent.productName}\nstyle code: ${itemContent.styleColor}\ncurrent price: ${itemContent.currentPrice}\nemployee price: ${itemContent.employeePrice}\nproduct state: ${itemContent.state}\n${skuInfo}\n\n`;
+  });
+  const finalContent = contentList.reduce((acc, curr) => acc += curr, anchor ? `anchor ${anchor}:\n` : "");
+  return finalContent;
+};
 
-    promiseList = productNameList.map(obj => itemDetail(obj.productItemName, obj.productItemCode));
-
-    Promise.all(promiseList).then(values => {
-      const statusList = handleStatusResult(values);
-      const contentList = statusList.map(itemContent => {
-        let skuInfo = itemContent.availableSkus.reduce((acc, cur) => acc += `${cur.localizedSize} `, "available size: ");
-        return `product name: ${itemContent.productName}\nstyle code: ${itemContent.styleColor}\ncurrent price: ${itemContent.currentPrice}\nemployee price: ${itemContent.employeePrice}\nproduct state: ${itemContent.state}\n${skuInfo}\n\n`;
-      });
-      const finalContent = contentList.reduce((acc, curr) => acc += curr, `anchor ${anchor}:\n`);
-      sendWechatMessage(finalContent).then(result => {
-        if (res)
-          res.send(result.data);
-        else
-          console.log(result.data);
-      }).catch(err => {
-        if (res)
-          res.send(err);
-        else
-          console.log(err);
-      });
-    }).catch(error => res.send(error.response));
+const handleJordanList = async (anchor, count, res) => {
+  let statusList = await getJordanStatusList(anchor, count);
+  const finalContent = statusListFormat(statusList, anchor);
+  sendWechatMessage(finalContent).then(result => {
+    if (res)
+      res.send(result.data);
+    else
+      console.log(result.data);
+  }).catch(err => {
+    if (res)
+      res.send(err);
+    else
+      console.log(err);
   });
 };
 
@@ -142,19 +121,65 @@ router.get('/startInterval', (req, res) => {
     let anchor = 0;
     let count = 30;
     let result = [];
+    let isError = false;
     while (anchor < 100) {
-      let statusList = await getJordanStatusList(anchor, count);
-      result = result.concat(statusList);
-      anchor += 30;
+      console.log('start anchor: ' + anchor);
+      try {
+        let statusList = await getJordanStatusList(anchor, count);
+        console.log('end anchor: ' + anchor);
+        result = result.concat(statusList);
+        anchor += 30;
+      } catch(e) {
+        // console.log(e);
+        // let err = e;
+        isError = true;
+        break;
+      }
     }
-    latestStatusList = result;
-    sendWechatMessage(latestStatusList.length);
-  }, 10000);
+    if (isError) {
+      console.log("\n Request error! End this round.");
+      return;
+    }
+    if (latestStatusList.length === 0) {
+      latestStatusList = result;
+    } else if (latestStatusList.length > 0) {
+      let newShoes = [];
+      let replenishedShoes = [];
+      result.forEach(shoes => {
+        let isIn = false;
+        latestStatusList.some(old => {
+          if (old.styleColor === shoes.styleColor) {
+            isIn = true;
+            if (old.availableSkus.length < shoes.availableSkus.length) {
+              replenishedShoes.push(shoes);
+            }
+            return true;
+          }
+        });
+        if (isIn === false) {
+          newShoes.push(shoes);
+        }
+      });
+      if (replenishedShoes.length > 0) {
+        sendWechatMessage("Replenished shoes:\n" + statusListFormat(replenishedShoes));
+      }
+
+      if (newShoes.length > 0) {
+        sendWechatMessage("New shoes:\n" + statusListFormat(newShoes));
+      }
+
+      latestStatusList = result;
+      console.log("latest Jordan shoes number:\n" + latestStatusList.length + "\n\n\n");
+      // console.log("latest Jordan shoes status:\n" + statusListFormat(latestStatusList));
+    }
+  }, 60000);
+  res.send('Start successfully!');
 });
 
 
 router.get('/stopInterval', (req, res) => {
   clearInterval(getJordanListInterval);
+  res.send('Stop successfully!');
 });
 
 router.post('/wechat/callback', (req, res) => {
