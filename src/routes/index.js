@@ -119,7 +119,7 @@ let getJordanListInterval = null;
 router.get('/startInterval', (req, res) => {
   getJordanListInterval = setInterval(async () => {
     let anchor = 0;
-    let count = 30;
+    let count = 10;
     let result = [];
     let isError = false;
     while (anchor < 100) {
@@ -128,7 +128,7 @@ router.get('/startInterval', (req, res) => {
         let statusList = await getJordanStatusList(anchor, count);
         console.log('end anchor: ' + anchor);
         result = result.concat(statusList);
-        anchor += 30;
+        anchor += count;
       } catch(e) {
         // console.log(e);
         // let err = e;
@@ -137,7 +137,7 @@ router.get('/startInterval', (req, res) => {
       }
     }
     if (isError) {
-      console.log("\n Request error! End this round.");
+      console.log("\nRequest error! End this round.");
       return;
     }
     if (latestStatusList.length === 0) {

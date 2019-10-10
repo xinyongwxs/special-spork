@@ -79,7 +79,8 @@ export const sendWechatMessage = msg => {
             123
         ],
         "uids": [//发送目标的UID，是一个数组！！！
-            "UID_1RCym3XNLQTIkC3pcSTSPq4k8kNd"
+            "UID_1RCym3XNLQTIkC3pcSTSPq4k8kNd",
+            "UID_zq6zyHvOSwzVxyru84UdyW4AxCoD"
         ]
     });
 };
