@@ -119,7 +119,7 @@ let getJordanListInterval = null;
 router.get('/startInterval', (req, res) => {
   getJordanListInterval = setInterval(async () => {
     let anchor = 0;
-    let count = 10;
+    let count = 5;
     let result = [];
     let isError = false;
     while (anchor < 100) {
